@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi Ujian Penyesuaian Kenaikan Pangkat (UPKP)</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --secondary: #0284c7;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #ca8a04;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
+    .container { max-width: 900px; margin: 0 auto; background: var(--card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); overflow: hidden; }
+    header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 24px; text-align: center; }
+    header h1 { font-size: 1.5rem; margin-bottom: 8px; font-weight: 700; }
+    header p { font-size: 0.95rem; opacity: 0.9; }
+    
+    .rules-card { padding: 20px 24px; background: #eff6ff; border-bottom: 1px solid var(--border); }
+    .rules-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
+    .rules-table th, .rules-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+    .rules-table th { background-color: #f1f5f9; color: var(--text); }
+    .rules-table tr:last-child { font-weight: bold; background-color: #f8fafc; }
+
+    .content-area { padding: 24px; }
+    .meta-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+    .category-badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: #e0f2fe; color: #0369a1; }
+    .timer { font-weight: 700; color: #b91c1c; font-size: 1.1rem; background: #fee2e2; padding: 4px 12px; border-radius: 6px; }
+
+    .question-box { margin-bottom: 24px; }
+    .question-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: #0f172a; }
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+    .option-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+    .option-item:hover { background-color: #f8fafc; border-color: var(--secondary); }
+    .option-item input[type="radio"] { margin-top: 4px; cursor: pointer; }
+    .option-item.selected { background-color: #f0fdf4; border-color: #22c55e; }
+
+    .nav-buttons { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; pt: 16px; }
+    button { padding: 10px 20px; font-size: 0.95rem; font-weight: 600; border-radius: 6px; cursor: pointer; border: none; transition: background 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #e2e8f0; color: var(--text); }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-finish { background: var(--success); color: white; }
+    .btn-finish:hover { background: #15803d; }
+
+    .grid-nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); max-height: 180px; overflow-y: auto; }
+    .grid-btn { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 6px; background: white; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .grid-btn.answered { background: #dcfce7; border-color: #86efac; color: #166534; }
+    .grid-btn.current { outline: 2px solid var(--primary); }
+
+    /* Result styling */
+    .result-container { display: none; padding: 24px; }
+    .result-status { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 24px; font-size: 1.3rem; font-weight: bold; }
+    .status-lulus { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .status-tidak { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .score-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    .score-table th, .score-table td { padding: 10px 14px; border: 1px solid var(--border); text-align: center; }
+    .score-table th { background: #f8fafc; text-align: left; }
+    .score-table td:first-child { text-align: left; }
+    .badge-pass { color: var(--success); font-weight: bold; }
+    .badge-fail { color: var(--danger); font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>SIMULASI UJIAN PENYESUAIAN KENAIKAN PANGKAT (UPKP)</h1>
+    <p>Tingkat II dan Tingkat III (Pendidikan Diploma III dan Diploma IV / Sarjana)</p>
+  </header>
+
+  <div class="rules-card">
+    <div style="font-weight: 600; margin-bottom: 6px; color: #1e3a8a;">Ketentuan Nilai Ambang Batas (Passing Grade):</div>
+    <table class="rules-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Jenis Tes</th>
+          <th>Jumlah Soal</th>
+          <th>Nilai Maksimal</th>
+          <th>Batas Kelulusan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Tes Wawasan Kebangsaan (TWK)</td><td>30</td><td>150</td><td>90</td></tr>
+        <tr><td>2</td><td>Tes Kompetensi Teknis (TKT)</td><td>25</td><td>125</td><td>75</td></tr>
+        <tr><td>3</td><td>Tes Substansi Instansi (TSI)</td><td>30</td><td>150</td><td>90</td></tr>
+        <tr><td>4</td><td>Tes Kompetensi Penunjang (TKP)</td><td>15</td><td>75</td><td>45</td></tr>
+        <tr><td>-</td><td><strong>TOTAL</strong></td><td><strong>100</strong></td><td><strong>500</strong></td><td><strong>300</strong></td></tr>
+      </tbody>
+    </table>
+    <small style="color: var(--text-muted); display: block; margin-top: 6px;">*Sistem penilaian: Jawaban Benar = 5 poin, Salah/Kosong = 0 poin. Kelulusan ditentukan jika seluruh kategori memenuhi batas ambang dan total minimal 300.</small>
+  </div>
+
+  <div id="quiz-area" class="content-area">
+    <div class="meta-bar">
+      <div>
+        <span id="category-badge" class="category-badge">Kategori</span>
+        <span style="font-size: 0.9rem; font-weight: 600; margin-left: 10px;" id="q-counter">Soal 1 / 100</span>
+      </div>
+      <div class="timer" id="timer-display">Sisa Waktu: 90:00</div>
+    </div>
+
+    <div class="question-box">
+      <div id="question-text" class="question-title">Memuat pertanyaan...</div>
+      <div id="options-container" class="options-list"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button id="prev-btn" class="btn-secondary" onclick="prevQuestion()">Sebelumnya</button>
+      <div>
+        <button id="next-btn" class="btn-primary" onclick="nextQuestion()">Berikutnya</button>
+        <button id="submit-btn" class="btn-finish" style="display:none;" onclick="confirmFinish()">Selesai Ujian</button>
+      </div>
+    </div>
+
+    <div class="grid-nav" id="grid-nav"></div>
+  </div>
+
+  <div id="result-area" class="result-container">
+    <div id="result-status" class="result-status"></div>
+    <h3 style="margin-bottom: 12px; color: var(--primary);">Rincian Nilai Per Kategori:</h3>
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Jenis Tes</th>
+          <th>Jumlah Soal</th>
+          <th>Benar</th>
+          <th>Skor Diperoleh</th>
+          <th>Batas Minimal</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="result-breakdown"></tbody>
+    </table>
+    <div style="text-align: center; margin-top: 20px;">
+      <button class="btn-primary" onclick="location.reload()">Ulangi Simulasi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Bank Soal Komprehensif Sesuai Proporsi Resmi
+const questionsData = [
+  // --- TES WAWASAN KEBANGSAAN (TWK) : 30 Soal ---
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Pancasila sebagai dasar negara memiliki makna bahwa seluruh penyelenggaraan ketatanegaraan Indonesia harus bersumber pada nilai-nilai Pancasila. Hal ini menegaskan fungsi Pancasila sebagai...",
+    options: ["Pandangan hidup bangsa", "Sumber dari segala sumber hukum", "Perjanjian luhur bangsa", "Ideologi terbuka"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Nilai instrumental Pancasila merupakan penjabaran lebih lanjut dari nilai-nilai dasar. Wujud nyata dari nilai instrumental tersebut adalah...",
+    options: ["Undang-Undang dan peraturan perundang-undangan", "Sikap tolong-menolong masyarakat", "Gotong royong di pedesaan", "Semboyan Bhinneka Tunggal Ika"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Menurut UUD 1945 Pasal 1 ayat (2) setelah amandemen, kedaulatan berada di tangan rakyat dan dilaksanakan...",
+    options: ["Sepenuhnya oleh Majelis Permusyawaratan Rakyat", "Menurut Undang-Undang Dasar", "Oleh Presiden dibantu menteri", "Melalui referendum rakyat"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Salah satu bentuk pengamalan Pancasila sila ke-4 dalam birokrasi pemerintahan adalah...",
+    options: ["Menghargai hasil karya bawahan", "Mengedepankan musyawarah mufakat dalam pengambilan kebijakan", "Menjalankan ibadah sesuai keyakinan", "Membantu rekan yang tertimpa musibah"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Bhinneka Tunggal Ika pertama kali tertulis dalam kitab Sutasoma karya...",
+    options: ["Mpu Sedah", "Mpu Prapanca", "Mpu Tantular", "Mpu Panuluh"],
+    answer: 2
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Lembaga negara yang berwenang menguji undang-undang terhadap Undang-Undang Dasar 1945 adalah...",
+    options: ["Mahkamah Agung", "Mahkamah Konstitusi", "Komisi Yudisial", "Dewan Perwakilan Rakyat"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Dalam sistem ketatanegaraan Indonesia pasca amandemen UUD 1945, MPR terdiri atas anggota...",
+    options: ["DPR dan Utusan Golongan", "DPR dan DPD", "DPR, DPD, dan Utusan Daerah", "DPR dan Menteri Kabinet"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Sikap bela negara bagi Aparatur Sipil Negara diwujudkan secara konkret melalui...",
+    options: ["Mengikuti pelatihan militer berkala", "Bekerja profesional, jujur, dan berintegritas melayani publik", "Menghafalkan seluruh pasal UUD 1945", "Menolak interaksi dengan pihak asing"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Prinsip geopolitik Indonesia yang memandang kesatuan kepulauan, daratan, dan lautan sebagai satu kesatuan utuh disebut...",
+    options: ["Wawasan Nusantara", "Ketahanan Nasional", "Bela Negara", "Wawasan Kebangsaan"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Peristiwa Rengasdengklok terjadi terutama karena adanya...",
+    options: ["Penyerahan tanpa syarat Belanda kepada Jepang", "Perbedaan pendapat antara golongan tua dan muda terkait proklamasi", "Tekanan Sekutu terhadap pemimpin Indonesia", "Pemberontakan militer PETA terhadap Dai Nippon"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Sidang pertama BPUPKI pada tanggal 29 Mei - 1 Juni 1945 fokus membahas perumusan...",
+    options: ["UUD Negara", "Bentuk pemerintahan", "Dasar negara Indonesia merdeka", "Teks proklamasi"],
+    answer: 2
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Hak Presiden untuk memberi pengampunan atau penghapusan hukuman dengan pertimbangan Mahkamah Agung disebut...",
+    options: ["Amnesti", "Abolisi", "Grasi", "Rehabilitasi"],
+    answer: 2
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Tujuan Negara Republik Indonesia yang termaktub dalam Pembukaan UUD 1945 alinea ke-4 antara lain mencakup...",
+    options: ["Mencapai kemakmuran militer regional", "Memajukan kesejahteraan umum dan mencerdaskan kehidupan bangsa", "Menjadi kekuatan dominan di Asia Tenggara", "Menguasai sumber perdagangan strategis dunia"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Dekrit Presiden 5 Juli 1959 mengeluarkan keputusan penting, di antaranya adalah...",
+    options: ["Pembubaran PKI dan ormasnya", "Berlakunya kembali UUD 1945 dan pembubaran Konstituante", "Pengangkatan Soekarno sebagai Presiden seumur hidup", "Pembentukan Kabinet Gotong Royong"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Pemisahan antara TNI dan POLRI sebagai bagian dari reformasi sektor keamanan ditetapkan pada ketetapan...",
+    options: ["TAP MPR No. VI/MPR/2000", "TAP MPR No. IX/MPR/1998", "TAP MPRS No. XXV/1966", "TAP MPR No. III/MPR/2000"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Asas kewarganegaraan yang menentukan status kewarganegaraan seseorang berdasarkan hubungan darah atau keturunan orang tuanya dinamakan...",
+    options: ["Ius Soli", "Ius Sanguinis", "Apartide", "Bipatride"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Perjanjian Linggarjati yang ditandatangani tahun 1947 mengakui kekuasaan de facto RI atas wilayah...",
+    options: ["Seluruh Hindia Belanda", "Jawa, Madura, dan Sumatera", "Jawa dan Bali saja", "Sumatera dan Kalimantan"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Berikut ini yang merupakan ciri ideologi terbuka adalah...",
+    options: ["Nilai-nilainya dipaksakan secara dogmatis dari luar", "Nilai dan cita-cita digali dari kekayaan rohani dan budaya masyarakat sendiri", "Menolak dialog dan perubahan zaman", "Mutlak dan tidak boleh dipertanyakan"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Perwujudan sila ke-5 'Keadilan sosial bagi seluruh rakyat Indonesia' dalam tata kelola pelayanan publik dicontohkan oleh...",
+    options: ["Memberikan kemudahan layanan khusus hanya bagi kerabat pejabat", "Pelayanan yang adil, transparan, dan tidak diskriminatif kepada setiap warga negara", "Menolak masyarakat yang mengurus berkas tanpa membawa hadiah", "Memberikan bantuan hanya kepada kelompok politik tertentu"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Salah satu pilar kebangsaan Indonesia yang menjadi wadah final bentuk negara adalah...",
+    options: ["Negara Kesatuan Republik Indonesia (NKRI)", "Federasi Nusantara", "Uni Republik Indonesia", "Persemakmuran Kepulauan"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Batas laut teritorial Indonesia berdasarkan Deklarasi Djuanda 13 Desember 1957 ditarik sejauh...",
+    options: ["3 mil laut", "12 mil laut", "200 mil laut", "24 mil laut"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Fungsi DPR RI yang berkaitan dengan pengawasan terhadap pelaksanaan undang-undang dan APBN disebut...",
+    options: ["Fungsi Legislasi", "Fungsi Anggaran", "Fungsi Pengawasan", "Fungsi Interpelasi"],
+    answer: 2
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Kongres Pemuda II yang melahirkan ikrar Sumpah Pemuda pada 28 Oktober 1928 dipimpin oleh...",
+    options: ["Soegondo Djojopoespito", "Mohammad Yamin", "Amir Sjarifuddin", "J. Leimena"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Amandemen UUD 1945 dilakukan sebanyak empat kali dalam kurun waktu tahun...",
+    options: ["1998 - 2001", "1999 - 2002", "2000 - 2004", "1997 - 2000"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Sikap cinta tanah air dan rela berkorban untuk kepentingan bangsa dan negara di atas kepentingan pribadi dan golongan mencerminkan nilai sila ke-...",
+    options: ["Satu", "Dua", "Tiga", "Empat"],
+    answer: 2
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Prinsip politik luar negeri Indonesia adalah 'Bebas Aktif'. Kata 'Bebas' bermakna...",
+    options: ["Bebas memihak blok manapun yang menguntungkan modal", "Tidak terikat pada kekuatan blok militer tertentu dan menentukan sikap sendiri", "Pasif dan tidak ikut campur urusan internasional", "Bebas menyatakan perang terhadap negara lain"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Pemilihan umum di Indonesia diselenggarakan berdasarkan asas Luber Jurdil. Kepanjangan dari Luber adalah...",
+    options: ["Langsung, Umum, Bebas, Rahasia", "Lancar, Unggul, Bersih, Rapi", "Lengkap, Unik, Bersama, Rela", "Lugas, Umum, Benar, Rinci"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Keberagaman suku bangsa dan budaya di Indonesia hendaknya dikelola sebagai...",
+    options: ["Pemicu persaingan antar daerah", "Kekayaan nasional pemersatu bangsa", "Alasan untuk memisahkan diri", "Beban integrasi pembangunan"],
+    answer: 1
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Organisasi pergerakan nasional pertama di Indonesia yang berorientasi modern adalah Budi Utomo, didirikan pada...",
+    options: ["20 Mei 1908", "28 Oktober 1928", "17 Agustus 1945", "1 Juni 1945"],
+    answer: 0
+  },
+  {
+    cat: "Tes Wawasan Kebangsaan",
+    q: "Pasal dalam UUD 1945 yang mengatur bahwa setiap warga negara berhak dan wajib ikut serta dalam upaya pembelaan negara adalah...",
+    options: ["Pasal 27 ayat (3)", "Pasal 30 ayat (1)", "Pasal 31 ayat (1)", "Pasal 33 ayat (1)"],
+    answer: 0
+  },
+
+  // --- TES KOMPETENSI TEKNIS (TKT) : 25 Soal ---
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Berdasarkan UU Nomor 20 Tahun 2023 tentang Aparatur Sipil Negara, pegawai ASN terdiri atas...",
+    options: ["PNS dan Honorer", "PNS dan PPPK", "PNS, Pegawai Kontrak, dan PTT", "Aparatur Sipil dan Militer"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Sistem yang mendasarkan manajemen ASN pada kualifikasi, kompetensi, dan kinerja secara adil dan wajar tanpa diskriminasi disebut...",
+    options: ["Sistem Patronase", "Sistem Merit", "Sistem Senioritas", "Sistem Spoils"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Core Values ASN yang diluncurkan oleh Presiden RI adalah 'BerAKHLAK'. Akronim ini merupakan singkatan dari...",
+    options: [
+      "Berorientasi Pelayanan, Akuntabel, Kompeten, Harmonis, Loyal, Adaptif, Kolaboratif",
+      "Bersih, Amanah, Kompetitif, Humanis, Loyal, Andal, Kredibel",
+      "Berwibawa, Akuntabel, Kritis, Harmonis, Lugas, Adaptif, Komunikatif",
+      "Berorientasi Kinerja, Adil, Kompeten, Humanis, Loyal, Aktif, Kredibel"
+    ],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Dalam tata persuratan dinas instansi pemerintah, naskah dinas yang memuat instruksi pimpinan kepada bawahan untuk melaksanakan tugas tertentu disebut...",
+    options: ["Nota Dinas", "Surat Perintah / Surat Tugas", "Surat Edaran", "Memorandum"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Alat evaluasi kinerja tahunan bagi pegawai ASN yang menilai pencapaian target dan perilaku kerja adalah...",
+    options: ["SKP (Sasaran Kinerja Pegawai)", "DP3 (Daftar Penilaian Pelaksanaan Pekerjaan)", "LHKPN", "Analisis Beban Kerja"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Dalam penyusunan Standar Operasional Prosedur (SOP), simbol diagram alir (flowchart) berbentuk belah ketupat (rhombus) melambangkan...",
+    options: ["Awal atau akhir alur (terminator)", "Proses operasional pekerjaan", "Pengambilan keputusan (decision/kondisi ya/tidak)", "Dokumen atau arsip keluar"],
+    answer: 2
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Tingkatan hukuman disiplin PNS menurut Peraturan Pemerintah No. 94 Tahun 2021 dikelompokkan menjadi tiga, yaitu...",
+    options: ["Ringan, Sedang, dan Berat", "Teguran, Skorsing, dan Pemecatan", "Administratif, Perdata, dan Pidana", "Lisan, Tertulis, dan Pemberhentian Tetap"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Format naskah dinas intern yang digunakan pejabat untuk menyampaikan pendapat, rekomendasi, atau laporan pelaksanaan tugas kepada atasannya langsung disebut...",
+    options: ["Surat Keputusan", "Nota Dinas", "Instruksi", "Surat Edaran"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Dalam administrasi perkantoran modern, sistem pengelolaan kearsipan dinamis yang digunakan oleh instansi pemerintah di Indonesia secara terpadu adalah...",
+    options: ["SIKS-NG", "SRIKANDI", "SIMPATIKA", "DAPODIK"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Dokumen perencanaan pembangunan jangka menengah daerah/instansi yang disusun untuk periode 5 tahun adalah...",
+    options: ["RKT (Rencana Kerja Tahunan)", "RPJMD / Renstra (Rencana Strategis)", "LAKIP", "RKA-KL"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Siklus pengelolaan barang milik negara (BMN) mencakup hal-hal berikut, KECUALI...",
+    options: ["Perencanaan kebutuhan dan penganggaran", "Pengadaan dan penggunaan", "Pengalihan kepemilikan pribadi tanpa prosedur", "Pemindahtanganan dan pemusnahan"],
+    answer: 2
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Indikator Kinerja Utama (IKU) dirancang dengan kriteria SMART. Huruf 'M' dalam akronim tersebut berarti...",
+    options: ["Meaningful", "Measurable (Dapat diukur)", "Manageable", "Mandatory"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Prinsip pengadaan barang dan jasa pemerintah menurut Perpres No. 16 Tahun 2018 dan perubahannya adalah...",
+    options: ["Efisien, efektif, transparan, terbuka, bersaing, adil/tidak diskriminatif, dan akuntabel", "Cepat, murah, fleksibel, tertutup, dan menguntungkan mitra rekanan", "Kekeluargaan, kesepakatan tertutup, bertahap, dan kompromi", "Sentralistik, rahasia, independen, dan swakelola mandiri"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Kenaikan pangkat reguler bagi PNS yang tidak menduduki jabatan struktural/fungsional tertentu umumnya dapat diberikan sekurang-kurangnya setelah...",
+    options: ["2 tahun dalam pangkat terakhir", "3 tahun dalam pangkat terakhir", "4 tahun dalam pangkat terakhir", "5 tahun dalam pangkat terakhir"],
+    answer: 2
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Hak cuti tahunan bagi PNS yang telah bekerja sekurang-kurangnya satu tahun secara terus-menerus adalah sebanyak...",
+    options: ["10 hari kerja", "12 hari kerja", "14 hari kerja", "15 hari kerja"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Metode analisis beban kerja (ABK) bertujuan utama untuk...",
+    options: ["Menghitung tunjangan kinerja pegawai bulanan", "Menentukan jumlah kebutuhan formasi pegawai dan efektivitas organisasi", "Menilai tingkat kepuasan masyarakat", "Menyeleksi calon pejabat struktural"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Aplikasi pengolah lembar kerja (spreadsheet) rumus yang digunakan untuk menjumlahkan data dengan kriteria tertentu adalah...",
+    options: ["SUM", "SUMIF", "COUNTIF", "VLOOKUP"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Prinsip tata kelola pemerintahan yang baik (Good Governance) yang mewajibkan keterbukaan informasi kepada publik disebut...",
+    options: ["Transparansi", "Akuntabilitas", "Partisipasi", "Efisiensi"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Batasan usia pensiun bagi pejabat fungsional ahli pertama dan ahli muda adalah...",
+    options: ["56 tahun", "58 tahun", "60 tahun", "65 tahun"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Berikut ini yang merupakan jenis arsip statis adalah...",
+    options: ["Surat undangan rapat dinas besok", "Naskah perjanjian batas wilayah negara yang telah final dan bernilai sejarah", "Daftar hadir harian pegawai bulan lalu", "Formulir permohonan cuti sementara"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Peraturan perundang-undangan yang mengatur tentang Keterbukaan Informasi Publik adalah...",
+    options: ["UU No. 14 Tahun 2008", "UU No. 25 Tahun 2009", "UU No. 5 Tahun 2014", "UU No. 30 Tahun 2014"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Dalam hierarki peraturan perundang-undangan di Indonesia (UU No. 12 Tahun 2011), posisi Peraturan Presiden berada di...",
+    options: ["Atas UUD 1945", "Bawah Peraturan Daerah Provinsi", "Bawah Peraturan Pemerintah (PP)", "Di atas Ketetapan MPR"],
+    answer: 2
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Tindakan administrasi pemerintahan yang dilakukan oleh pejabat melebihi wewenang yang diberikan oleh ketentuan hukum disebut...",
+    options: ["Ultra Vires (Penyalahgunaan/Pelampauan Wewenang)", "Diskresi sah", "Maladministrasi ringan", "Efisiensi birokrasi"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Pelayanan publik yang berasaskan perlakuan yang sama tanpa membeda-bedakan suku, agama, ras, dan golongan mencerminkan asas...",
+    options: ["Non-diskriminatif", "Kepastian hukum", "Akuntabilitas", "Kecepatan dan kemudahan"],
+    answer: 0
+  },
+  {
+    cat: "Tes Kompetensi Teknis",
+    q: "Penyusunan anggaran berbasis kinerja menitikberatkan pada...",
+    options: ["Berapa banyak uang yang dihabiskan", "Kesesuaian input belanja terhadap output dan outcome capaian program", "Kecepatan serapan anggaran tanpa melihat hasil", "Proporsi anggaran untuk perjalanan dinas"],
+    answer: 1
+  },
+
+  // --- TES SUBSTANSI INSTANSI (TSI) : 30 Soal ---
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Visi jangka panjang pembangunan nasional Indonesia (RPJPN 2025-2045) diarahkan menuju terwujudnya...",
+    options: ["Indonesia Maju dan Sentosa", "Indonesia Emas 2045: Negara Nusantara Berdaulat, Maju, dan Berkelanjutan", "Indonesia Mandiri dan Berdikari", "Masyarakat Makmur Adil Merata"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Reformasi Birokrasi tematik di Indonesia saat ini berfokus pada penanganan hal-hal strategis, salah satunya adalah...",
+    options: ["Pengentasan kemiskinan dan digitalisasi administrasi pemerintahan", "Peningkatan kuota impor pangan", "Penambahan jam kerja aparatur sipil", "Pemisahan kementerian dan lembaga secara parsial"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Sistem Akuntabilitas Kinerja Instansi Pemerintah (SAKIP) bertujuan untuk...",
+    options: ["Menghitung denda keterlambatan aparatur", "Mengintegrasikan perencanaan, penganggaran, dan pelaporan kinerja agar terukur", "Mengontrol pengadaan barang fisik semata", "Menyusun tes kenaikan pangkat otomatis"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Zona Integritas (ZI) menuju WBK dan WBBM dicanangkan oleh instansi pemerintah. Singkatan dari WBK adalah...",
+    options: ["Wilayah Bebas Korupsi", "Wilayah Bersih Korupsi", "Wadah Birokrasi Kredibel", "Wilayah Berkinerja Khusus"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Dalam pembangunan Zona Integritas, WBBM merupakan singkatan dari...",
+    options: ["Wilayah Birokrasi Bebas Masalah", "Wilayah Birokrasi Bersih dan Melayani", "Wadah Bersama Birokrasi Mandiri", "Wilayah Berintegritas Berkelanjutan Maju"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Saluran pengaduan internal bagi pegawai atau publik untuk melaporkan dugaan tindak pidana korupsi/pelanggaran etika di instansi disebut...",
+    options: ["Whistleblowing System (WBS)", "Sistem Informasi Presensi", "Call Center Publik", "Portal Aspirasi Warga"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Kewajiban pelaporan harta kekayaan bagi penyelenggara negara dan pejabat tertentu diatur melalui mekanisme...",
+    options: ["SPT Pajak Tahunan saja", "LHKPN / LHKASN", "Laporan Rekening Koran Pribadi", "Buku Kas Unit Kerja"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Pemberian gratifikasi yang dianggap suap adalah pemberian yang...",
+    options: ["Nilainya di bawah ketentuan suvenir resmi", "Berhubungan dengan jabatan dan berlawanan dengan kewajiban atau tugas penerima", "Diberikan oleh keluarga kandung dalam upacara pernikahan", "Diberikan dalam bentuk ucapan terima kasih non-materi"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Batas waktu pelaporan penerimaan gratifikasi kepada KPK terhitung sejak tanggal diterimanya gratifikasi adalah paling lambat...",
+    options: ["7 hari kerja", "14 hari kerja", "30 hari kerja", "60 hari kalender"],
+    answer: 2
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Sistem Pengendalian Intern Pemerintah (SPIP) diatur dalam Peraturan Pemerintah Nomor...",
+    options: ["PP No. 60 Tahun 2008", "PP No. 101 Tahun 2000", "PP No. 53 Tahun 2010", "PP No. 11 Tahun 2017"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Salah satu unsur pengendalian intern dalam SPIP adalah...",
+    options: ["Lingkungan pengendalian", "Penilaian risiko", "Kegiatan pengendalian", "Semua jawaban benar"],
+    answer: 3
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Peran utama Aparat Pengawasan Intern Pemerintah (APIP) saat ini telah bergeser dari sekadar watch dog (mencari kesalahan) menjadi...",
+    options: ["Pemberi sanksi pidana langsung", "Konsultan dan penjamin kualitas (quality assurance)", "Pelaksana operasional anggaran unit", "Pengganti auditor eksternal BPK"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Penerapan Sistem Pemerintahan Berbasis Elektronik (SPBE) di instansi pemerintah bertujuan untuk...",
+    options: ["Mewujudkan tata kelola pemerintahan yang bersih, efektif, transparan, dan akuntabel berbasis digital", "Mengurangi interaksi antar sesama pegawai di kantor", "Menghapus pengadaan komputer baru", "Menjadikan seluruh rapat bersifat daring tanpa dokumentasi"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Lembaga non-struktural yang bertugas mengawasi penyelenggaraan pelayanan publik di Indonesia adalah...",
+    options: ["Komisi Kejaksaan", "Ombudsman Republik Indonesia", "Komisi Yudisial", "Lembaga Perlindungan Saksi dan Korban"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Berdasarkan UU No. 25 Tahun 2009 tentang Pelayanan Publik, maklumat pelayanan merupakan...",
+    options: ["Sumpah jabatan petugas loket", "Pernyataan kesanggupan dan kewajiban penyelenggara untuk melaksanakan pelayanan sesuai standar", "Laporan keuangan tahunan kantor layanan", "Brosur promosi wisata daerah"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Dalam manajemen risiko instansi, risiko didefinisikan sebagai...",
+    options: ["Kejadian pasti yang merugikan keuangan", "Kemungkinan terjadinya peristiwa yang berdampak negatif terhadap pencapaian sasaran organisasi", "Kelalaian pegawai dalam mengisi presensi", "Pemberian teguran lisan oleh pimpinan"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Dokumen yang memuat kesepakatan kinerja antara pimpinan instansi dan bawahannya dalam rangka akuntabilitas disebut...",
+    options: ["Perjanjian Kinerja (PK)", "Surat Perjanjian Kerja Waktu Tertentu", "Pakta Non-Agresi", "Nota Kesepahaman Rekanan"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Standar Pelayanan Minimal (SPM) adalah ketentuan mengenai...",
+    options: ["Gaji minimal pegawai honorer daerah", "Jenis dan mutu pelayanan dasar yang berhak diperoleh setiap warga negara secara minimal", "Jumlah maksimal jam kerja pegawai dalam sepekan", "Batas belanja barang operasional kantor"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Berikut ini yang merupakan contoh konflik kepentingan (conflict of interest) di tempat kerja adalah...",
+    options: ["Menghadiri pelatihan kompetensi yang ditugaskan dinas", "Mengikutsertakan perusahaan milik keluarga dalam proses tender pengadaan yang dikelolanya", "Memberikan arahan teknis kepada bawahan baru", "Melaporkan gratifikasi kepada Unit Pengendalian Gratifikasi"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Tata naskah dinas elektronik di instansi pemerintah bertujuan untuk mempercepat proses birokrasi dan mendukung kebijakan...",
+    options: ["Paperless office (efisiensi penggunaan kertas)", "Sentralisasi surat fisik pos", "Penutupan akses internet kantor", "Pengurangan jam operasional"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Indeks Kepuasan Masyarakat (IKM) terhadap layanan instansi pemerintah diukur berdasarkan indikator-indikator yang diatur dalam PermenPANRB tentang...",
+    options: ["Pedoman Survei Kepuasan Masyarakat (SKM)", "Disiplin PNS", "Standar Pakaian Dinas ASN", "Pengangkatan Jabatan Fungsional"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Hierarki perencanaan pembangunan di tingkat daerah mencakup dokumen...",
+    options: ["RPJPD, RPJMD, dan RKPD", "APBN, APBD, dan DIPA", "SKP, IKU, dan Renja", "LAKIP, LKjIP, dan LPPD"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Jika seorang ASN ditawari bingkisan parsel hari raya oleh rekanan proyek yang sedang berlangsung, tindakan etis yang benar adalah...",
+    options: ["Menerima karena tidak enak menolak di depan umum", "Menolak secara santun dan menjelaskan aturan larangan gratifikasi bagi ASN", "Menerima lalu membagikannya kepada tetangga rumah", "Menerima dan meminta rekanan merahasiakannya"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Fungsi BPK (Badan Pemeriksa Keuangan) dalam konteks keuangan instansi pemerintah adalah...",
+    options: ["Menyusun rancangan anggaran kementerian/lembaga", "Melakukan pemeriksaan atas pengelolaan dan tanggung jawab keuangan negara", "Menyalurkan dana DIPA kepada satker", "Menetapkan besaran gaji PNS tahunan"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Penyederhanaan birokrasi di instansi pemerintah dilakukan melalui strategi...",
+    options: ["Penyetaraan jabatan administrasi ke dalam jabatan fungsional", "Penambahan struktur eselon IV di setiap unit", "Perpanjangan jalur hierarki persetujuan surat", "Penghapusan seluruh sistem IT birokrasi"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Mekanisme kerja yang lincah (agile) dalam birokrasi modern mendorong pembentukan...",
+    options: ["Tim kerja lintas fungsi (squad/cross-functional teams)", "Departementalisasi yang kaku", "Pemisahan sekat antar unit eselon", "Birokrasi bertingkat sepuluh"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Dalam evaluasi SAKIP, instansi pemerintah dinilai pada 5 komponen, di antaranya adalah...",
+    options: ["Perencanaan kinerja, pengukuran kinerja, pelaporan kinerja, evaluasi internal, capaian kinerja", "Jumlah pegawai, absensi kehadiran, seragam dinas, gedung kantor, anggaran", "Popularitas pimpinan, keaktifan media sosial, sponsorship, pameran, penghargaan", "Jumlah surat masuk, surat keluar, lembur pegawai, SPPD, katering"],
+    answer: 0
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Salah satu upaya pencegahan korupsi di tingkat instansi adalah pembentukan UPG, yaitu...",
+    options: ["Unit Pelayanan Gerak", "Unit Pengendalian Gratifikasi", "Unit Pengawasan Gaji", "Unsur Pengawas Gedung"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Pemberian penghargaan tanda kehormatan Satyalancana Karya Satya bagi PNS diberikan atas pengabdian selama...",
+    options: ["5, 10, dan 15 tahun", "10, 20, dan 30 tahun", "15, 25, dan 35 tahun", "8, 16, dan 24 tahun"],
+    answer: 1
+  },
+  {
+    cat: "Tes Substansi Instansi",
+    q: "Prinsip 'Keterpaduan Layanan Digital Nasional' diatur dalam arsitektur...",
+    options: ["Satu Data Indonesia dan Arsitektur SPBE", "Katalog Barang Konvensional", "Pemberkasan Manual Terpusat", "Sistem Arsip Lemari Besi"],
+    answer: 0
+  },
+
+  // --- TES KOMPETENSI PENUNJANG (TKP) : 15 Soal ---
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Ketika rekan kerja dalam tim mengalami kendala pribadi mendesak sehingga target kelompok terancam terlambat, respon terbaik Anda adalah...",
+    options: ["Membiarkan karena masing-masing sudah memiliki tanggung jawab tugas sendiri", "Membantu menyelesaikan bagian tugasnya secara sukarela setelah pekerjaan utama Anda selesai agar target tim tercapai", "Melaporkan ketidakmampuan rekan tersebut kepada atasan untuk diberi teguran", "Meminta atasan membatalkan proyek tersebut"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Instansi Anda memperkenalkan aplikasi sistem pelaporan berbasis web yang baru, sementara Anda lebih terbiasa dengan metode manual. Sikap Anda adalah...",
+    options: ["Menolak menggunakan aplikasi baru karena merepotkan", "Mempelajari dan beradaptasi menggunakan aplikasi baru secara aktif serta mengikuti pelatihan dengan sungguh-sungguh", "Menggunakan cara lama secara diam-diam", "Meminta staf magang untuk selalu mengerjakan laporan Anda"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Seorang warga pengguna layanan datang dengan nada emosi karena berkas permohonannya belum selesai. Tindakan profesional Anda adalah...",
+    options: ["Membalas dengan nada tinggi agar warga tersebut tahu batasan", "Mendengarkan keluhannya dengan tenang, mengecek status berkas, dan menjelaskan solusi secara santun dan solutif", "Meninggalkan loket pelayanan sampai warga tenang", "Memanggil petugas keamanan untuk mengusir warga tersebut"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Dalam rapat penyusunan program kerja, rekan tim mengajukan ide yang bertolak belakang dengan pendapat Anda. Sikap Anda yang tepat adalah...",
+    options: ["Langsung memotong pembicaraan dan menolak idenya", "Mendengarkan argumentasinya dengan objektif dan mendiskusikan kelebihan serta kekurangannya demi keputusan terbaik", "Keluar dari ruangan rapat karena merasa tidak dihargai", "Menyetujui secara terpaksa namun tidak mau menjalankan keputusannya"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Anda diberikan tugas mendadak dengan tenggat waktu sangat ketat di saat Anda sedang menyelesaikan pekerjaan lain. Prioritas tindakan Anda adalah...",
+    options: ["Mengeluh kepada rekan kerja di media sosial", "Menyusun skala prioritas, berkoordinasi dengan atasan terkait urutan penyelesaian, dan fokus mengeksekusi tugas mendesak", "Menunda kedua pekerjaan tersebut", "Menolak tugas tambahan dengan alasan kelelahan"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Komitmen terhadap integritas bagi seorang ASN diuji ketika melihat rekan satu divisi memanipulasi absensi kehadiran. Respon yang tepat adalah...",
+    options: ["Ikut meniru karena merasa hal itu lazim", "Mengingatkan rekan tersebut secara baik-baik bahwa tindakan itu melanggar aturan dan kode etik", "Pura-pura tidak melihat dan acuh tak acuh", "Meminta imbalan agar Anda tidak membocorkan perbuatannya"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Ketika terjadi kesalahpahaman dalam tim kerja yang memicu suasana kerja canggung, inisiatif yang perlu diambil adalah...",
+    options: ["Memilih berpihak pada teman yang paling dekat", "Menginisiasi dialog terbuka secara kekeluargaan untuk meluruskan persepsi dan menjaga kekompakan tim", "Membiarkan suasana memburuk dengan sendirinya", "Membuat grup obrolan tandingan untuk membicarakan rekan lain"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Seorang ASN dituntut memiliki orientasi pelayanan prima. Makna esensial dari melayani prima adalah...",
+    options: ["Hanya bersikap ramah kepada pejabat tinggi", "Memberikan pelayanan terbaik melebihi ekspektasi standar secara tulus, cepat, tepat, dan solutif bagi masyarakat", "Mengharap tips dan pujian dari masyarakat", "Menyelesaikan urusan hanya jika ada kompensasi"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Menghadapi era transformasi digital kecerdasan buatan (AI) di sektor publik, sikap ASN yang adaptif adalah...",
+    options: ["Merasa terancam dan menolak modernisasi", "Mengeksplorasi potensi pemanfaatan teknologi secara etis untuk meningkatkan efisiensi kerja organisasi", "Mengabaikan perkembangan teknologi", "Menyerahkan seluruh analisis kebijakan sepenuhnya kepada sistem tanpa telaah kritis"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Ketika hasil pekerjaan Anda mendapat kritik tajam dan masukan revisi dari pimpinan, respon konstruktif Anda adalah...",
+    options: ["Membela diri secara membabi buta dan menyalahkan instruksi atasan", "Menerima masukan dengan lapang dada sebagai bahan evaluasi perbaikan kualitas diri dan pekerjaan", "Merasa tersinggung dan mogok kerja", "Mencari kambing hitam rekan lain"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Bagaimana cara efektif menjaga kerahasiaan data dan dokumen rahasia instansi di lingkungan kerja?",
+    options: ["Mengunggahnya ke media sosial pribadi untuk cadangan", "Menyimpan dokumen pada tempat yang aman, mengunci komputer saat ditinggalkan, dan tidak membagikan kepada pihak tidak berwenang", "Menceritakan rahasia kantor saat berbincang santai di tempat umum", "Menyimpan kata sandi di kertas memo yang ditempel di layar monitor"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Dalam sebuah kelompok kerja yang anggotanya berasal dari latar belakang suku, agama, dan budaya yang beragam, sikap Anda adalah...",
+    options: ["Hanya berkomunikasi akrab dengan anggota yang satu daerah asal", "Menjunjung tinggi toleransi, inklusivitas, dan memperlakukan setiap orang setara tanpa prasangka", "Menghindari keterlibatan dalam kegiatan bersama", "Menuntut orang lain mengikuti tradisi kelompok mayoritas"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Kemampuan manajemen waktu yang baik dicerminkan oleh kebiasaan...",
+    options: ["Mengerjakan tugas selalu di menit-menit terakhir sebelum deadline (sistem kebut semalam)", "Membuat jadwal terencana, menentukan target capaian harian, dan disiplin mengeksekusinya", "Menerima semua permintaan tanpa melihat kapasitas waktu yang ada", "Menunda pekerjaan yang dirasa membosankan hingga batas waktu habis"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Jika Anda menemukan celah prosedur pelayanan yang sering dikeluhkan lambat oleh masyarakat, tindakan solutif Anda adalah...",
+    options: ["Membiarkannya karena sudah menjadi kebiasaan lama sejak bertahun-tahun", "Menyusun usulan inovasi atau perbaikan alur birokrasi yang lebih ringkas dan menyampaikannya kepada atasan", "Menyuruh masyarakat untuk bersabar dan tidak banyak komplain", "Menyalahkan unit kerja bagian lain secara terbuka di depan umum"],
+    answer: 1
+  },
+  {
+    cat: "Tes Kompetensi Penunjang",
+    q: "Nilai akuntabilitas dalam penggunaan fasilitas dan anggaran dinas ditunjukkan oleh...",
+    options: ["Menggunakan kendaraan operasional kantor untuk liburan pribadi keluarga ke luar kota", "Menggunakan fasilitas negara secara bijak, bertanggung jawab, efektif, dan hanya untuk kepentingan kedinasan", "Membawa pulang persediaan ATK kantor untuk keperluan sekolah anak", "Membiarkan lampu dan komputer kantor menyala seharian saat libur akhir pekan"],
+    answer: 1
+  }
+];
+
+// State variables
+let currentIdx = 0;
+let userAnswers = new Array(questionsData.length).fill(null);
+let timeLeft = 90 * 60; // 90 menit
+
+// Initialize UI
+function init() {
+  renderQuestion(currentIdx);
+  buildGrid();
+  startTimer();
+}
+
+function renderQuestion(idx) {
+  const q = questionsData[idx];
+  document.getElementById("category-badge").innerText = q.cat;
+  document.getElementById("q-counter").innerText = `Soal ${idx + 1} / ${questionsData.length}`;
+  document.getElementById("question-text").innerText = `${idx + 1}. ${q.q}`;
+
+  const container = document.getElementById("options-container");
+  container.innerHTML = "";
+
+  q.options.forEach((opt, oIdx) => {
+    const isSelected = userAnswers[idx] === oIdx;
+    const item = document.createElement("label");
+    item.className = `option-item ${isSelected ? 'selected' : ''}`;
+    item.innerHTML = `
+      <input type="radio" name="option" value="${oIdx}" ${isSelected ? 'checked' : ''} onchange="selectOption(${idx}, ${oIdx})">
+      <div><strong>${String.fromCharCode(65 + oIdx)}.</strong> ${opt}</div>
+    `;
+    container.appendChild(item);
+  });
+
+  // Nav buttons
+  document.getElementById("prev-btn").disabled = (idx === 0);
+  if (idx === questionsData.length - 1) {
+    document.getElementById("next-btn").style.display = "none";
+    document.getElementById("submit-btn").style.display = "inline-block";
+  } else {
+    document.getElementById("next-btn").style.display = "inline-block";
+    document.getElementById("submit-btn").style.display = "none";
+  }
+
+  updateGridStatus();
+}
+
+function selectOption(qIdx, optIdx) {
+  userAnswers[qIdx] = optIdx;
+  renderQuestion(qIdx);
+}
+
+function prevQuestion() {
+  if (currentIdx > 0) {
+    currentIdx--;
+    renderQuestion(currentIdx);
+  }
+}
+
+function nextQuestion() {
+  if (currentIdx < questionsData.length - 1) {
+    currentIdx++;
+    renderQuestion(currentIdx);
+  }
+}
+
+function jumpToQuestion(idx) {
+  currentIdx = idx;
+  renderQuestion(currentIdx);
+}
+
+function buildGrid() {
+  const grid = document.getElementById("grid-nav");
+  grid.innerHTML = "";
+  questionsData.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.className = "grid-btn";
+    btn.id = `grid-btn-${i}`;
+    btn.innerText = i + 1;
+    btn.onclick = () => jumpToQuestion(i);
+    grid.appendChild(btn);
+  });
+  updateGridStatus();
+}
+
+function updateGridStatus() {
+  questionsData.forEach((_, i) => {
+    const btn = document.getElementById(`grid-btn-${i}`);
+    if (btn) {
+      btn.className = "grid-btn";
+      if (userAnswers[i] !== null) btn.classList.add("answered");
+      if (i === currentIdx) btn.classList.add("current");
+    }
+  });
+}
+
+function startTimer() {
+  const timerElem = document.getElementById("timer-display");
+  const interval = setInterval(() => {
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      alert("Waktu ujian telah berakhir!");
+      calculateResults();
+    } else {
+      timeLeft--;
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerElem.innerText = `Sisa Waktu: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  }, 1000);
+}
+
+function confirmFinish() {
+  const unanswered = userAnswers.filter(a => a === null).length;
+  let msg = "Apakah Anda yakin ingin menyelesaikan ujian?";
+  if (unanswered > 0) {
+    msg += `\n(Masih ada ${unanswered} soal yang belum dijawab)`;
+  }
+  if (confirm(msg)) {
+    calculateResults();
+  }
+}
+
+function calculateResults() {
+  document.getElementById("quiz-area").style.display = "none";
+  document.getElementById("result-area").style.display = "block";
+
+  const categories = [
+    { name: "Tes Wawasan Kebangsaan", totalQ: 30, maxScore: 150, passScore: 90 },
+    { name: "Tes Kompetensi Teknis", totalQ: 25, maxScore: 125, passScore: 75 },
+    { name: "Tes Substansi Instansi", totalQ: 30, maxScore: 150, passScore: 90 },
+    { name: "Tes Kompetensi Penunjang", totalQ: 15, maxScore: 75, passScore: 45 }
+  ];
+
+  let totalScore = 0;
+  let allPassed = true;
+  const tbody = document.getElementById("result-breakdown");
+  tbody.innerHTML = "";
+
+  categories.forEach(cat => {
+    const catQuestions = questionsData.map((q, idx) => ({ ...q, idx })).filter(q => q.cat === cat.name);
+    let correctCount = 0;
+
+    catQuestions.forEach(q => {
+      if (userAnswers[q.idx] === q.answer) {
+        correctCount++;
+      }
+    });
+
+    const score = correctCount * 5;
+    totalScore += score;
+    const passed = score >= cat.passScore;
+    if (!passed) allPassed = false;
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><strong>${cat.name}</strong></td>
+      <td>${cat.totalQ}</td>
+      <td>${correctCount}</td>
+      <td>${score} / ${cat.maxScore}</td>
+      <td>${cat.passScore}</td>
+      <td class="${passed ? 'badge-pass' : 'badge-fail'}">${passed ? 'MEMENUHI' : 'TIDAK MEMENUHI'}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  // Total summary row
+  const totalPassed = totalScore >= 300 && allPassed;
+  const totalRow = document.createElement("tr");
+  totalRow.style.fontWeight = "bold";
+  totalRow.style.backgroundColor = "#f1f5f9";
+  totalRow.innerHTML = `
+    <td>TOTAL KESELURUHAN</td>
+    <td>100</td>
+    <td>${totalScore / 5}</td>
+    <td>${totalScore} / 500</td>
+    <td>300</td>
+    <td class="${totalPassed ? 'badge-pass' : 'badge-fail'}">${totalPassed ? 'MEMENUHI' : 'TIDAK MEMENUHI'}</td>
+  `;
+  tbody.appendChild(totalRow);
+
+  const statusBox = document.getElementById("result-status");
+  if (totalPassed) {
+    statusBox.className = "result-status status-lulus";
+    statusBox.innerHTML = `SELAMAT! ANDA DINYATAKAN LULUS UJIAN PENYESUAIAN KENAIKAN PANGKAT<br><span style="font-size:1rem; font-weight:normal;">Total Skor Anda: ${totalScore} dari 500 (Memenuhi seluruh nilai ambang batas)</span>`;
+  } else {
+    statusBox.className = "result-status status-tidak";
+    statusBox.innerHTML = `MOHON MAAF, ANDA BELUM MEMENUHI SYARAT KELULUSAN<br><span style="font-size:1rem; font-weight:normal;">Total Skor Anda: ${totalScore} dari 500. Setiap sub-tes wajib memenuhi nilai ambang batas minimal.</span>`;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
